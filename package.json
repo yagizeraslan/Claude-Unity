@@ -1,0 +1,39 @@
+{
+  "name": "com.yagizeraslan.claude",
+  "version": "1.0.0",
+  "displayName": "Claude API for Unity",
+  "description": "A lightweight, streaming-supported integration of the Claude AI API for Unity projects.",
+  "unity": "2020.3",
+  "type": "library",
+  "documentationUrl": "https://github.com/yagizeraslan/Claude-Unity/blob/main/README.md",
+  "changelogUrl": "https://github.com/yagizeraslan/Claude-Unity/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/yagizeraslan/Claude-Unity/blob/main/LICENSE",
+  "dependencies": {
+    "com.unity.textmeshpro": "3.0.6"
+  },
+  "keywords": [
+    "claude",
+    "anthropic",
+    "ai",
+    "api",
+    "chat",
+    "language model",
+    "llm",
+    "ai assistant",
+    "streaming",
+    "unitask",
+    "unity async"
+  ],
+  "author": {
+    "name": "Yagiz ERASLAN",
+    "email": "yagizeraslan@gmail.com",
+    "url": "https://www.linkedin.com/in/yagizeraslan/"
+  },
+  "samples": [
+    {
+      "displayName": "Claude Chat Example",
+      "description": "Complete example of a Claude chat interface.",
+      "path": "Samples~/Claude-Chat"
+    }
+  ]
+}
