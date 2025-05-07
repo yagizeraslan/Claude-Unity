@@ -10,24 +10,24 @@
   <a href="https://github.com/sponsors/yagizeraslan">
     <img alt="Sponsor" src="https://img.shields.io/badge/Sponsor-❤-ff69b4">
   </a>
-  <a href="https://github.com/yagizeraslan/DeepSeek-Unity/commits/main">
-    <img alt="Last Commit" src="https://img.shields.io/github/last-commit/yagizeraslan/DeepSeek-Unity">
+  <a href="https://github.com/yagizeraslan/Claude-Unity/commits/main">
+    <img alt="Last Commit" src="https://img.shields.io/github/last-commit/yagizeraslan/Claude-Unity">
   </a>
-  <a href="https://github.com/yagizeraslan/DeepSeek-Unity">
-    <img alt="Code Size" src="https://img.shields.io/github/languages/code-size/yagizeraslan/DeepSeek-Unity">
+  <a href="https://github.com/yagizeraslan/Claude-Unity">
+    <img alt="Code Size" src="https://img.shields.io/github/languages/code-size/yagizeraslan/Claude-Unity">
   </a>
   <br/>
   
   <!-- Bottom bigger social + platform badges -->
   <img alt="Maintenance" src="https://img.shields.io/badge/Maintained-Yes-brightgreen">
-  <a href="https://github.com/yagizeraslan/DeepSeek-Unity/stargazers">
-    <img alt="GitHub stars" src="https://img.shields.io/github/stars/yagizeraslan/DeepSeek-Unity?style=social">
+  <a href="https://github.com/yagizeraslan/Claude-Unity/stargazers">
+    <img alt="GitHub stars" src="https://img.shields.io/github/stars/yagizeraslan/Claude-Unity?style=social">
   </a>
-  <a href="https://github.com/yagizeraslan/DeepSeek-Unity/network/members">
-    <img alt="GitHub forks" src="https://img.shields.io/github/forks/yagizeraslan/DeepSeek-Unity?style=social">
+  <a href="https://github.com/yagizeraslan/Claude-Unity/network/members">
+    <img alt="GitHub forks" src="https://img.shields.io/github/forks/yagizeraslan/Claude-Unity?style=social">
   </a>
-  <a href="https://github.com/yagizeraslan/DeepSeek-Unity/issues">
-    <img alt="GitHub issues" src="https://img.shields.io/github/issues/yagizeraslan/DeepSeek-Unity?style=social">
+  <a href="https://github.com/yagizeraslan/Claude-Unity/issues">
+    <img alt="GitHub issues" src="https://img.shields.io/github/issues/yagizeraslan/Claude-Unity?style=social">
   </a>
   <img alt="Windows" src="https://img.shields.io/badge/Platform-Windows-blue">
   <img alt="WebGL" src="https://img.shields.io/badge/Platform-WebGL-orange">
