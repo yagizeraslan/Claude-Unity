@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -18,11 +19,27 @@ namespace YagizEraslan.Claude.Unity
 
         public async Task<ChatCompletionResponse> CreateChatCompletion(ChatCompletionRequest request)
         {
-            request.stream = false;
-            string body = JsonUtility.ToJson(request);
+            if (request.messages == null || request.messages.Length == 0)
+            {
+                Debug.LogError("ClaudeApi: No messages found in request.");
+                return null;
+            }
+
+            request.max_tokens = request.max_tokens > 0 ? request.max_tokens : 500;
+
+            string prompt = request.messages[request.messages.Length - 1].content;
+            string escapedPrompt = prompt.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            string body = $@"
+    {{
+        ""model"": ""{request.model}"",
+        ""messages"": [{{""role"": ""user"", ""content"": ""{escapedPrompt}""}}],
+        ""max_tokens"": {request.max_tokens},
+        ""stream"": false
+    }}";
+
             byte[] jsonToSend = Encoding.UTF8.GetBytes(body);
 
-            using UnityWebRequest www = new UnityWebRequest("https://api.anthropic.com/v1/messages", "POST");
+            using var www = new UnityWebRequest("https://api.anthropic.com/v1/messages", "POST");
             www.uploadHandler = new UploadHandlerRaw(jsonToSend);
             www.downloadHandler = new DownloadHandlerBuffer();
             www.SetRequestHeader("Content-Type", "application/json");
@@ -37,7 +54,16 @@ namespace YagizEraslan.Claude.Unity
                 return null;
             }
 
-            return JsonUtility.FromJson<ChatCompletionResponse>(www.downloadHandler.text);
+            var json = www.downloadHandler.text;
+            try
+            {
+                return JsonUtility.FromJson<ChatCompletionResponse>(json);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Failed to parse Claude response: " + e.Message);
+                return null;
+            }
         }
     }
 }
