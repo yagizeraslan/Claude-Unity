@@ -133,7 +133,7 @@ To test everything:
 
 ## 🔐 API Key Handling
 
-- During dev: Store key via `EditorPrefs` using the DeepSeek Editor Window
+- During dev: Store key via `EditorPrefs` using the Claude Editor Window
 - In production builds: Use the `ClaudeSettings` ScriptableObject (recommended)
 
 **DO NOT** hardcode your key in scripts or prefabs — Unity will reject the package.
@@ -252,7 +252,7 @@ ClaudeModel.Claude_3_Haiku
 
 ## 💖 Support This Project
 
-If you find **DeepSeek-Unity** useful, please consider supporting its development!
+If you find **Claude-Unity** useful, please consider supporting its development!
 
 - [Become a sponsor on GitHub Sponsors](https://github.com/sponsors/yagizeraslan)
 - [Buy me a coffee on Ko-fi](https://ko-fi.com/yagizeraslan)
