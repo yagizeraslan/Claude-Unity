@@ -8,7 +8,7 @@ namespace YagizEraslan.Claude.Unity
     {
         [Header("Claude Configuration")]
         [SerializeField] private ClaudeSettings config;
-        [SerializeField] private ClaudeModel modelType = ClaudeModel.Claude_3_Sonnet;
+        [SerializeField] private ClaudeModel modelType = ClaudeModel.Claude_3_7_Sonnet;
         [SerializeField] private bool useStreaming = false;
 
         [Header("UI Elements")]
