@@ -9,8 +9,25 @@ namespace YagizEraslan.Claude.Unity
     {
         public void CreateChatCompletionStream(ChatCompletionRequest request, string apiKey, Action<string> onStreamUpdate)
         {
+            if (request.messages == null || request.messages.Length == 0)
+            {
+                Debug.LogError("ClaudeStreamingApi: No messages found in request.");
+                return;
+            }
+
             request.stream = true;
-            string body = JsonUtility.ToJson(request);
+            request.max_tokens = request.max_tokens > 0 ? request.max_tokens : 500;
+
+            string prompt = request.messages[request.messages.Length - 1].content;
+            string escapedPrompt = prompt.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            string body = $@"
+            {{
+                ""model"": ""{request.model}"",
+                ""messages"": [{{""role"": ""user"", ""content"": ""{escapedPrompt}""}}],
+                ""max_tokens"": {request.max_tokens},
+                ""stream"": true
+            }}";
+
             byte[] bodyRaw = Encoding.UTF8.GetBytes(body);
 
             UnityWebRequest req = new UnityWebRequest("https://api.anthropic.com/v1/messages", "POST");
