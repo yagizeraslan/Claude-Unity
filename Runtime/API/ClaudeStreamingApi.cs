@@ -57,21 +57,33 @@ namespace YagizEraslan.Claude.Unity
 
                         try
                         {
-                            var parsed = Newtonsoft.Json.Linq.JObject.Parse(jsonChunk);
-                            var delta = parsed["delta"]?["text"]?.ToString();
-                            if (!string.IsNullOrEmpty(delta))
+                            var parsed = JsonUtility.FromJson<ClaudeStreamChunk>(jsonChunk);
+                            string deltaText = parsed?.delta?.text;
+                            if (!string.IsNullOrEmpty(deltaText))
                             {
-                                onStreamUpdate?.Invoke(delta);
+                                onStreamUpdate?.Invoke(deltaText);
                             }
                         }
                         catch (Exception e)
                         {
-                            Debug.LogWarning("Claude chunk parse failed: " + e.Message);
+                            Debug.LogWarning("Failed to parse Claude stream chunk: " + e.Message);
                         }
                     }
                 }
 
                 return true;
+            }
+        }
+
+        [Serializable]
+        private class ClaudeStreamChunk
+        {
+            public Delta delta;
+
+            [Serializable]
+            public class Delta
+            {
+                public string text;
             }
         }
     }
