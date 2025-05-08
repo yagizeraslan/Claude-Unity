@@ -1,0 +1,51 @@
+name: Build & Release UnityPackage
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  export-package:
+    name: Export .unitypackage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Unity
+        uses: game-ci/unity-installer@v2
+        with:
+          unityVersion: 2020.3.0f1  # Change to match your Unity version
+
+      - name: Export Claude UnityPackage
+        run: |
+          mkdir -p ExportedPackage
+          /opt/unity/Editor/Unity \
+            -batchmode \
+            -nographics \
+            -quit \
+            -projectPath . \
+            -exportPackage "Assets/Samples" "ExportedPackage/Claude-Unity.unitypackage"
+
+      - name: Get Version from Tag
+        id: get_version
+        run: |
+          echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "Claude Unity v${{ steps.get_version.outputs.version }}"
+          tag_name: "v${{ steps.get_version.outputs.version }}"
+          files: ExportedPackage/Claude-Unity.unitypackage
+          body: |
+            🧠 Claude Unity v${{ steps.get_version.outputs.version }}
+
+            This release includes the `.unitypackage` export of the UPM repo for direct import via Unity:
+            - Includes `ClaudeChat.cs` prefab, sample scene, and runtime APIs.
+            - Compatible with Unity 2020.3+
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
