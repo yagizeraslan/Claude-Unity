@@ -11,30 +11,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set up Unity
-        uses: game-ci/unity-installer@v2
+      - name: Setup Unity and Export .unitypackage
+        uses: game-ci/unity-builder@v2
         with:
-          unityVersion: 2020.3.0f1  # Change to match your Unity version
-
-      - name: Export Claude UnityPackage
-        run: |
-          mkdir -p ExportedPackage
-          /opt/unity/Editor/Unity \
-            -batchmode \
-            -nographics \
-            -quit \
-            -projectPath . \
-            -exportPackage "Assets/Samples" "ExportedPackage/Claude-Unity.unitypackage"
+          unityVersion: 2020.3.0f1
+          customParameters: -quit -batchmode -nographics -projectPath . -exportPackage Assets/Samples ExportedPackage/Claude-Unity.unitypackage
 
       - name: Get Version from Tag
         id: get_version
-        run: |
-          echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
 
-      - name: Create GitHub Release
+      - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
           name: "Claude Unity v${{ steps.get_version.outputs.version }}"
