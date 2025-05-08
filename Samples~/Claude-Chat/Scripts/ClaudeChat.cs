@@ -1,3 +1,4 @@
+// Sample script to test Claude API Integration for Unity
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
