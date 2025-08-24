@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace YagizEraslan.Claude.Unity
@@ -12,7 +13,7 @@ namespace YagizEraslan.Claude.Unity
             var tcs = new TaskCompletionSource<UnityWebRequest>();
             
             // Use a local variable to prevent closure capture of the TaskCompletionSource
-            Action<AsyncOperation> completionHandler = null;
+            System.Action<UnityEngine.AsyncOperation> completionHandler = null;
             completionHandler = _ =>
             {
                 // Remove the handler to prevent memory leaks
