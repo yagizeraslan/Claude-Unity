@@ -41,6 +41,9 @@ namespace YagizEraslan.Claude.Unity
             {
                 if (req.result != UnityWebRequest.Result.Success)
                     Debug.LogError($"Claude Streaming Error: {req.error}");
+                
+                // Dispose of the request to prevent memory leaks
+                req.Dispose();
             };
         }
 

@@ -11,6 +11,7 @@ namespace YagizEraslan.Claude.Unity
         private readonly ClaudeSettings settings;
 
         public string ApiKey => settings.apiKey;
+        public ClaudeSettings Settings => settings;
 
         public ClaudeApi(ClaudeSettings config)
         {

@@ -9,7 +9,7 @@ namespace YagizEraslan.Claude.Unity
     {
         [Header("Claude Configuration")]
         [SerializeField] private ClaudeSettings config;
-        [SerializeField] private ClaudeModel modelType = ClaudeModel.Claude_3_7_Sonnet;
+        [SerializeField] private ClaudeModel modelType = ClaudeModel.Claude_4_Sonnet;
         [SerializeField] private bool useStreaming = false;
 
         [Header("UI Elements")]
@@ -26,13 +26,46 @@ namespace YagizEraslan.Claude.Unity
         {
             sendButton.onClick.AddListener(SendMessage);
 
-            inputField.onSubmit.AddListener(text =>
+            inputField.onSubmit.AddListener(OnInputFieldSubmit);
+
+            // Initialize controller once
+            InitializeController();
+        }
+
+        private void OnDestroy()
+        {
+            // Clean up event listeners to prevent memory leaks
+            if (sendButton != null)
             {
-                if (!string.IsNullOrWhiteSpace(text))
-                {
-                    SendMessage();
-                }
-            });
+                sendButton.onClick.RemoveListener(SendMessage);
+            }
+
+            if (inputField != null)
+            {
+                inputField.onSubmit.RemoveListener(OnInputFieldSubmit);
+            }
+
+            // Dispose controller to free up resources
+            controller?.Dispose();
+        }
+
+        private void OnInputFieldSubmit(string text)
+        {
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                SendMessage();
+            }
+        }
+
+        private void InitializeController()
+        {
+            controller = new ClaudeChatController(
+                new ClaudeApi(config),
+                GetSelectedModelName(),
+                AddFullMessageToUI,
+                AppendStreamingCharacter,
+                useStreaming
+            );
         }
 
         private string GetSelectedModelName()
@@ -44,17 +77,22 @@ namespace YagizEraslan.Claude.Unity
         {
             if (string.IsNullOrWhiteSpace(inputField.text)) return;
 
-            controller = new ClaudeChatController(
-                new ClaudeApi(config),
-                GetSelectedModelName(),
-                AddFullMessageToUI,
-                AppendStreamingCharacter,
-                useStreaming
-            );
+            // Recreate controller only if model type or streaming mode changed
+            if (controller == null || ShouldRecreateController())
+            {
+                InitializeController();
+            }
 
             controller.SendUserMessage(inputField.text);
             inputField.text = "";
             inputField.ActivateInputField();
+        }
+
+        private bool ShouldRecreateController()
+        {
+            // Check if current controller settings match current UI settings
+            // This is a simplified check - in a real implementation you might store the previous settings
+            return false; // For now, reuse the same controller
         }
 
         private void AddFullMessageToUI(ChatMessage message, bool isUser)

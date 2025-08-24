@@ -1,6 +1,6 @@
 {
   "name": "com.yagizeraslan.claude",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "displayName": "Claude API for Unity",
   "description": "A lightweight, streaming-supported integration of the Claude AI API for Unity projects.",
   "unity": "2020.3",

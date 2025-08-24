@@ -47,9 +47,10 @@
 
 - ✅ Clean, reusable SDK for Claude API
 - 🔄 Supports true SSE-based streaming and non-streaming chat completions
-- 🧠 Compatible with multiple models (Sonnet, Opus, Haiku)
+- 🧠 Compatible with **9 Claude models** including latest Claude 4 family
 - 🎨 Modular & customizable UI chat component
 - 🔐 Secure API key storage (runtime-safe)
+- 💾 **Advanced memory management** with configurable limits
 - ⚙️ Built with Unity Package Manager (UPM)
 - 🧪 Includes sample scene & prefabs
 
@@ -120,7 +121,7 @@ To test everything:
 3. Open:
     
     ```csharp
-    Assets/Samples/Claude API for Unity/1.0.0/Claude Chat Example/Scenes/Claude-Chat.unity
+    Assets/Samples/Claude API for Unity/1.1.0/Claude Chat Example/Scenes/Claude-Chat.unity
 
     ```
     
@@ -222,14 +223,47 @@ To enable:
 
 📌 You can toggle streaming on/off at runtime.
 
-### 💬 Multiple Models
+### 💬 Supported Models
 
+**Latest Claude 4 Family (2025):**
+```csharp
+ClaudeModel.Claude_4_1_Opus    // Most advanced model
+ClaudeModel.Claude_4_Opus      // Hybrid reasoning modes
+ClaudeModel.Claude_4_Sonnet    // 1M token context window
+```
+
+**Claude 3.7 & 3.5 Family:**
+```csharp
+ClaudeModel.Claude_3_7_Sonnet  // Hybrid AI reasoning
+ClaudeModel.Claude_3_5_Sonnet
+ClaudeModel.Claude_3_5_Haiku
+```
+
+**Claude 3 Family:**
 ```csharp
 ClaudeModel.Claude_3_Opus
 ClaudeModel.Claude_3_Sonnet
 ClaudeModel.Claude_3_Haiku
-
 ```
+
+### 🔧 Memory Management
+
+This package includes **advanced memory management** features:
+
+**Configurable History Limits:**
+- Set `maxHistoryMessages` in `ClaudeSettings` to prevent unbounded memory growth
+- Default: 50 messages (0 = unlimited)
+- Automatically trims oldest messages when limit is reached
+
+**Optimized Streaming:**
+- Uses `StringBuilder` for efficient token concatenation
+- Proper disposal of `UnityWebRequest` objects
+- Event handler cleanup prevents memory leaks
+
+**Resource Cleanup:**
+- Controllers implement `IDisposable` pattern
+- Automatic cleanup on GameObject destruction
+- TaskCompletionSource leak prevention
 
 ---
 
@@ -247,6 +281,10 @@ ClaudeModel.Claude_3_Haiku
 **Seeing JSON parse warnings in streaming mode?**  
 
 → These are normal during SSE — they occur when the parser receives partial chunks. They're automatically skipped and won't affect the final output.
+
+**Memory usage growing over time?**
+
+→ Check your `ClaudeSettings.asset` memory management settings. Set `maxHistoryMessages` to limit conversation history (default: 50, 0 = unlimited).
 
 ---
 

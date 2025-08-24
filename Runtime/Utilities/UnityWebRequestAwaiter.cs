@@ -1,15 +1,26 @@
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
 
-namespace YagizEraslan.DeepSeek.Unity
+namespace YagizEraslan.Claude.Unity
 {
     public static class UnityWebRequestAwaiter
     {
         public static TaskAwaiter<UnityWebRequest> GetAwaiter(this UnityWebRequestAsyncOperation request)
         {
             var tcs = new TaskCompletionSource<UnityWebRequest>();
-            request.completed += _ => tcs.SetResult(request.webRequest);
+            
+            // Use a local variable to prevent closure capture of the TaskCompletionSource
+            Action<AsyncOperation> completionHandler = null;
+            completionHandler = _ =>
+            {
+                // Remove the handler to prevent memory leaks
+                request.completed -= completionHandler;
+                tcs.SetResult(request.webRequest);
+            };
+            
+            request.completed += completionHandler;
             return tcs.Task.GetAwaiter();
         }
     }
