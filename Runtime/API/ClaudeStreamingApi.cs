@@ -5,57 +5,129 @@ using UnityEngine.Networking;
 
 namespace YagizEraslan.Claude.Unity
 {
-    public class ClaudeStreamingApi
+    /// <summary>
+    /// Streaming implementation of the Claude API using Server-Sent Events (SSE).
+    /// </summary>
+    public class ClaudeStreamingApi : IClaudeStreamingApi
     {
-        public void CreateChatCompletionStream(ChatCompletionRequest request, string apiKey, Action<string> onStreamUpdate)
+        private UnityWebRequest currentRequest;
+        private bool isCancelled;
+
+        /// <summary>
+        /// Creates a streaming chat completion request.
+        /// </summary>
+        public void CreateChatCompletionStream(
+            ChatCompletionRequest request,
+            string apiKey,
+            Action<string> onStreamUpdate,
+            Action<string> onError = null,
+            Action onComplete = null)
         {
-            if (request.messages == null || request.messages.Length == 0)
+            // Input validation
+            if (request == null)
             {
-                Debug.LogError("ClaudeStreamingApi: No messages found in request.");
+                var errorMsg = $"{ApiConstants.LOG_PREFIX_STREAMING} Request cannot be null.";
+                Debug.LogError(errorMsg);
+                onError?.Invoke(errorMsg);
                 return;
             }
 
-            request.stream = true;
-            request.max_tokens = request.max_tokens > 0 ? request.max_tokens : 500;
+            if (request.messages == null || request.messages.Length == 0)
+            {
+                var errorMsg = $"{ApiConstants.LOG_PREFIX_STREAMING} No messages found in request.";
+                Debug.LogError(errorMsg);
+                onError?.Invoke(errorMsg);
+                return;
+            }
 
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                var errorMsg = $"{ApiConstants.LOG_PREFIX_STREAMING} API key is not configured.";
+                Debug.LogError(errorMsg);
+                onError?.Invoke(errorMsg);
+                return;
+            }
+
+            // Reset cancellation state
+            isCancelled = false;
+
+            // Ensure streaming is enabled and max_tokens has a valid value
+            request.stream = true;
+            int maxTokens = request.max_tokens > 0 ? request.max_tokens : ApiConstants.DEFAULT_MAX_TOKENS_FALLBACK;
+
+            // Build request body
             string prompt = request.messages[request.messages.Length - 1].content;
             string escapedPrompt = prompt.Replace("\\", "\\\\").Replace("\"", "\\\"");
             string body = $@"
             {{
                 ""model"": ""{request.model}"",
                 ""messages"": [{{""role"": ""user"", ""content"": ""{escapedPrompt}""}}],
-                ""max_tokens"": {request.max_tokens},
+                ""max_tokens"": {maxTokens},
                 ""stream"": true
             }}";
 
             byte[] bodyRaw = Encoding.UTF8.GetBytes(body);
 
-            UnityWebRequest req = new UnityWebRequest("https://api.anthropic.com/v1/messages", "POST");
-            req.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            req.downloadHandler = new ClaudeStreamingDownloadHandler(onStreamUpdate);
-            req.SetRequestHeader("Content-Type", "application/json");
-            req.SetRequestHeader("x-api-key", apiKey);
-            req.SetRequestHeader("anthropic-version", "2023-06-01");
+            // Create and configure the request
+            currentRequest = new UnityWebRequest(ApiConstants.API_URL, "POST");
+            currentRequest.uploadHandler = new UploadHandlerRaw(bodyRaw);
 
-            req.SendWebRequest().completed += _ =>
+            // Create SSE parser and download handler
+            var sseParser = new SseParser(onStreamUpdate, () => onComplete?.Invoke(), onError);
+            currentRequest.downloadHandler = new ClaudeStreamingDownloadHandler(sseParser);
+
+            currentRequest.SetRequestHeader(ApiConstants.HEADER_CONTENT_TYPE, ApiConstants.CONTENT_TYPE_JSON);
+            currentRequest.SetRequestHeader(ApiConstants.HEADER_API_KEY, apiKey);
+            currentRequest.SetRequestHeader(ApiConstants.HEADER_ANTHROPIC_VERSION, ApiConstants.API_VERSION);
+
+            currentRequest.SendWebRequest().completed += _ =>
             {
-                if (req.result != UnityWebRequest.Result.Success)
-                    Debug.LogError($"Claude Streaming Error: {req.error}");
-                
+                if (!isCancelled && currentRequest.result != UnityWebRequest.Result.Success)
+                {
+                    var errorMsg = $"{ApiConstants.LOG_PREFIX_STREAMING} Error: {currentRequest.error}";
+                    Debug.LogError(errorMsg);
+                    onError?.Invoke(errorMsg);
+                }
+
                 // Dispose of the request to prevent memory leaks
-                req.Dispose();
+                DisposeCurrentRequest();
             };
         }
 
+        /// <summary>
+        /// Cancels the current streaming request.
+        /// </summary>
+        public void CancelStream()
+        {
+            isCancelled = true;
+            if (currentRequest != null)
+            {
+                currentRequest.Abort();
+                DisposeCurrentRequest();
+                Debug.Log($"{ApiConstants.LOG_PREFIX_STREAMING} Stream cancelled.");
+            }
+        }
+
+        private void DisposeCurrentRequest()
+        {
+            if (currentRequest != null)
+            {
+                currentRequest.Dispose();
+                currentRequest = null;
+            }
+        }
+
+        /// <summary>
+        /// Custom download handler that processes streaming data using SseParser.
+        /// </summary>
         private class ClaudeStreamingDownloadHandler : DownloadHandlerScript
         {
-            private readonly StringBuilder buffer = new();
-            private readonly Action<string> onStreamUpdate;
+            private readonly SseParser sseParser;
 
-            public ClaudeStreamingDownloadHandler(Action<string> onStreamUpdate, int bufferSize = 1024)
+            public ClaudeStreamingDownloadHandler(SseParser parser, int bufferSize = 1024)
                 : base(new byte[bufferSize])
             {
-                this.onStreamUpdate = onStreamUpdate;
+                this.sseParser = parser ?? throw new ArgumentNullException(nameof(parser));
             }
 
             protected override bool ReceiveData(byte[] data, int dataLength)
@@ -63,47 +135,8 @@ namespace YagizEraslan.Claude.Unity
                 if (data == null || dataLength == 0) return false;
 
                 string chunk = Encoding.UTF8.GetString(data, 0, dataLength);
-                buffer.Append(chunk);
-
-                string[] lines = buffer.ToString().Split('\n');
-                buffer.Clear();
-
-                foreach (string line in lines)
-                {
-                    if (line.StartsWith("data: "))
-                    {
-                        string jsonChunk = line.Substring(6).Trim();
-                        if (jsonChunk == "[DONE]") return true;
-
-                        try
-                        {
-                            var parsed = JsonUtility.FromJson<ClaudeStreamChunk>(jsonChunk);
-                            string deltaText = parsed?.delta?.text;
-                            if (!string.IsNullOrEmpty(deltaText))
-                            {
-                                onStreamUpdate?.Invoke(deltaText);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Debug.LogWarning("Failed to parse Claude stream chunk: " + e.Message);
-                        }
-                    }
-                }
-
+                sseParser.ProcessChunk(chunk);
                 return true;
-            }
-        }
-
-        [Serializable]
-        private class ClaudeStreamChunk
-        {
-            public Delta delta;
-
-            [Serializable]
-            public class Delta
-            {
-                public string text;
             }
         }
     }

@@ -164,14 +164,12 @@ To test everything:
 private async void Start()
 {
     var api = new ClaudeApi(config);
-    var request = new ChatCompletionRequest
-    {
-        model = ClaudeModel.Claude_3_Sonnet.ToModelString(),
-        messages = new ChatMessage[]
-        {
-            new ChatMessage { role = "user", content = "Tell me something cool." }
-        }
-    };
+
+    // Using the builder pattern (recommended)
+    var request = ChatCompletionRequest.Builder()
+        .WithModel(ClaudeModel.Claude_3_Sonnet)
+        .AddUserMessage("Tell me something cool.")
+        .Build();
 
     var response = await api.CreateChatCompletion(request);
     Debug.Log("[Claude] " + response.content[0].text);
@@ -185,21 +183,20 @@ private async void Start()
 
 private void Start()
 {
-    var request = new ChatCompletionRequest
-    {
-        model = ClaudeModel.Claude_3_Sonnet.ToModelString(),
-        messages = new ChatMessage[]
-        {
-            new ChatMessage { role = "user", content = "Stream a fun fact about space." }
-        },
-        stream = true
-    };
+    // Using the builder pattern (recommended)
+    var request = ChatCompletionRequest.Builder()
+        .WithModel(ClaudeModel.Claude_3_Sonnet)
+        .AddUserMessage("Stream a fun fact about space.")
+        .WithStreaming(true)
+        .Build();
 
     var streamingApi = new ClaudeStreamingApi();
     streamingApi.CreateChatCompletionStream(
         request,
         config.apiKey,
-        token => Debug.Log("[Claude Streaming] " + token)
+        onStreamUpdate: token => Debug.Log("[Claude Streaming] " + token),
+        onError: error => Debug.LogError(error),
+        onComplete: () => Debug.Log("[Claude] Stream complete!")
     );
 }
 

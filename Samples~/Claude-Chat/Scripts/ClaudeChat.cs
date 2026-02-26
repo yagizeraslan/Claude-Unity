@@ -1,10 +1,14 @@
 // Sample script to test Claude API Integration for Unity
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
 namespace YagizEraslan.Claude.Unity
 {
+    /// <summary>
+    /// Sample MonoBehaviour demonstrating Claude API integration with Unity UI.
+    /// </summary>
     public class ClaudeChat : MonoBehaviour
     {
         [Header("Claude Configuration")]
@@ -19,13 +23,17 @@ namespace YagizEraslan.Claude.Unity
         [SerializeField] private RectTransform receivedMessagePrefab;
         [SerializeField] private Transform messageContainer;
 
+        [Header("Memory Management")]
+        [SerializeField] private int maxUIMessages = ApiConstants.DEFAULT_MAX_UI_MESSAGES;
+        [SerializeField] private int uiTrimCount = ApiConstants.DEFAULT_UI_TRIM_COUNT;
+
         private ClaudeChatController controller;
         private TMP_Text activeStreamingText;
+        private readonly List<GameObject> uiMessages = new List<GameObject>();
 
         private void Start()
         {
             sendButton.onClick.AddListener(SendMessage);
-
             inputField.onSubmit.AddListener(OnInputFieldSubmit);
 
             // Initialize controller once
@@ -47,6 +55,9 @@ namespace YagizEraslan.Claude.Unity
 
             // Dispose controller to free up resources
             controller?.Dispose();
+
+            // Clear UI messages list (GameObjects will be destroyed with the scene)
+            uiMessages.Clear();
         }
 
         private void OnInputFieldSubmit(string text)
@@ -59,11 +70,17 @@ namespace YagizEraslan.Claude.Unity
 
         private void InitializeController()
         {
+            var api = new ClaudeApi(config);
+            var streamingApi = new ClaudeStreamingApi();
+
             controller = new ClaudeChatController(
-                new ClaudeApi(config),
+                api,
+                streamingApi,
+                config,
                 GetSelectedModelName(),
                 AddFullMessageToUI,
                 AppendStreamingCharacter,
+                OnError,
                 useStreaming
             );
         }
@@ -101,6 +118,10 @@ namespace YagizEraslan.Claude.Unity
             var instance = Instantiate(prefab, messageContainer);
             var textComponent = instance.GetComponentInChildren<TMP_Text>();
 
+            // Track UI message for memory management
+            uiMessages.Add(instance.gameObject);
+            TrimUIMessagesIfNeeded();
+
             if (textComponent != null)
             {
                 if (!isUser && useStreaming)
@@ -126,7 +147,21 @@ namespace YagizEraslan.Claude.Unity
             }
             else
             {
-                Debug.LogWarning("[UI] activeStreamingText is null — cannot update streaming content.");
+                Debug.LogWarning($"{ApiConstants.LOG_PREFIX_CHAT} activeStreamingText is null — cannot update streaming content.");
+            }
+        }
+
+        private void OnError(string errorMessage)
+        {
+            Debug.LogError($"{ApiConstants.LOG_PREFIX_CHAT} {errorMessage}");
+        }
+
+        private void TrimUIMessagesIfNeeded()
+        {
+            if (HistoryTrimmer.TrimGameObjectsIfNeeded(uiMessages, maxUIMessages, uiTrimCount))
+            {
+                Debug.Log($"{ApiConstants.LOG_PREFIX_CHAT} Trimmed UI messages. Current count: {uiMessages.Count}");
+                LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)messageContainer);
             }
         }
     }
